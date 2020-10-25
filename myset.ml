@@ -226,22 +226,47 @@ end
 (* DictSet: a functor that creates a SET by calling our           *)
 (* Dict.Make functor                                              *)
 (******************************************************************)
-(*
+
 module DictSet(C : COMPARABLE) : (SET with type elt = C.t) = 
 struct
   module D = Dict.Make(struct
       let key = C.t
-      let value = LinkSet.set
+      let value = C.t list
+      
+      let compare x y = C.compare x y 
+      let string_of_key x = C.string_of_t x
+      let string_of_value xs =     
+        let f = (fun y e -> y ^ "; " ^ C.string_of_t e) in
+        "set([" ^ (List.fold_left f "" xs) ^ "])"
+      let gen_key = C.gen_key
+      let gen_key_random = C.gen_random
+      let gen_key_gt x = C.gen_gt x
+      let gen_key_lt x = C.gen_ls x
+      let gen_key_between x y = C.gen_between x y 
+      let gen_value = [] 
+      let gen_pair = (gen_key(), gen_value())
   end)
 
-  type elt = D.key
-  type set = D.dict
-  let empty = ???
+  type elt = C.t
+  type set = D.value
+  let empty = []
 
-  (* implement the rest of the functions in the signature! *)
+  let is_empty xs = false
+  let insert x xs = []
+  let singleton x = []
+  let union xs ys = []
+  let intersect xs ys = []
+  let remove x xs = []
+  let member xs x = false
+  let choose xs = None
+  let fold fun x xs y = x
 
   let string_of_elt = D.string_of_key
   let string_of_set s = D.string_of_dict s
+  
+  let run_tests () = unit
+
+  end
 
   (****************************************************************)
   (* Tests for our DictSet functor                                *)
@@ -251,12 +276,10 @@ struct
   (****************************************************************)
 
   (* add your test functions to run_tests *)
+  (*
   let run_tests () = 
     ()
-end
-*)
-
-
+  *)
 
 (******************************************************************)
 (* Run our tests.                                                 *)
