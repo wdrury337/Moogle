@@ -249,8 +249,8 @@ struct
 
   type elt = C.t
   type set = C.t list
-  let empty = []
 
+  let empty = []
   let is_empty xs = false
   let insert x xs = []
   let singleton x = []
@@ -259,10 +259,10 @@ struct
   let remove x xs = []
   let member xs x = false
   let choose xs = None
-  let fold f e = List.fold_left (fun a x -> f x a) e
+  let fold f e = List.fold_left (fun a x -> f x a) e 
 
-  let string_of_elt = D.string_of_key
-  let string_of_set s = D.string_of_dict s
+  let string_of_elt = C.string_of_key
+  let string_of_set s = C.string_of_dict s
   
   let run_tests () = unit
 
