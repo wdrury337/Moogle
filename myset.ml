@@ -248,7 +248,7 @@ struct
   end)
 
   type elt = C.t
-  type set = D.value
+  type set = C.t list
   let empty = []
 
   let is_empty xs = false
@@ -259,7 +259,7 @@ struct
   let remove x xs = []
   let member xs x = false
   let choose xs = None
-  let fold fun x xs y = x
+  let fold f e = List.fold_left (fun a x -> f x a) e
 
   let string_of_elt = D.string_of_key
   let string_of_set s = D.string_of_dict s
