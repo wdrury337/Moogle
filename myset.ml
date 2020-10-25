@@ -238,13 +238,14 @@ struct
       let string_of_value xs =     
         let f = (fun y e -> y ^ "; " ^ C.string_of_t e) in
         "set([" ^ (List.fold_left f "" xs) ^ "])"
-      let gen_key = C.gen_key
-      let gen_key_random = C.gen_random
-      let gen_key_gt x = C.gen_gt x
-      let gen_key_lt x = C.gen_ls x
-      let gen_key_between x y = C.gen_between x y 
-      let gen_value = [] 
-      let gen_pair = (gen_key(), gen_value())
+
+      let gen_key () = C.gen ()
+      let gen_key_random () = C.gen_random ()
+      let gen_key_gt x () = C.gen_gt x ()
+      let gen_key_lt x () = C.gen_lt x ()
+      let gen_key_between x y () = C.gen_between x y ()
+      let gen_value () = []
+      let gen_pair () = (gen_key(), gen_value())
   end)
 
   type elt = C.t
@@ -261,10 +262,10 @@ struct
   let choose xs = None
   let fold f e = List.fold_left (fun a x -> f x a) e 
 
-  let string_of_elt = C.string_of_key
-  let string_of_set s = C.string_of_dict s
+  let string_of_elt x = D.string_of_key x
+  let string_of_set s = D.string_of_value s
   
-  let run_tests () = unit
+  let run_tests () = ()
 
   end
 
