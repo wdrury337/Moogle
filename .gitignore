@@ -1,0 +1,4 @@
+# ignore build files
+*.d.byte
+# ignore build folder
+_build
