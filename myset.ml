@@ -230,8 +230,8 @@ end
 module DictSet(C : COMPARABLE) : (SET with type elt = C.t) = 
 struct
   module D = Dict.Make(struct
-      let key = C.t
-      let value = C.t list
+      type key = C.t
+      type value = C.t list
       
       let compare x y = C.compare x y 
       let string_of_key x = C.string_of_t x
