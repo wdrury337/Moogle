@@ -281,16 +281,24 @@ struct
       |None->intersection
     in
     helper xs ys D.empty
-  let remove x xs = D.empty
-  let member xs x = false
-  let choose xs = None
-  let fold f x xs = x
+  let remove x xs = D.remove xs x
+  let member xs x = D.member xs x 
+  let choose xs = 
+    match D.choose xs with
+    |None -> None
+    |Some (k,v,d)->Some (k,d)
+  let fold f x = 
+    let rec helper f x xs = 
+      match D.choose xs with
+      |None -> x
+      |Some(k,v,d)->
+        helper f (f x k) d
 
   let string_of_elt = D.string_of_key
   let string_of_set s = D.string_of_dict s
   
   let test_is_empty () = 
-    is_empty D.empty
+    assert(is_empty D.empty)
 
   let test_singleton () = 
     singleton (C.gen())
