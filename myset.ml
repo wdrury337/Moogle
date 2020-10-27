@@ -248,23 +248,53 @@ struct
       let gen_pair () = (gen_key(), gen_value())
   end)
 
-  type elt = C.t
-  type set = C.t list
+  (* type elt = C.t *)
+  (* type set = C.t list *)
 
-  let empty = []
-  let is_empty xs = false
-  let insert x xs = []
-  let singleton x = []
-  let union xs ys = []
-  let intersect xs ys = []
-  let remove x xs = []
+  type elt = D.key
+  type set = D.dict
+
+  let empty = D.empty
+  let is_empty (xs: set) = 
+    match xs with 
+    | empty -> true
+    | _ -> false 
+  let singleton (x: elt) = D.insert empty x []
+  let insert x xs = D.insert xs x []
+  let union xs ys =
+    let rec helper d union : set = 
+      match D.choose d with
+      | Some (k,v,d')-> 
+        let union' = D.insert union k v in
+          helper d' union'
+      | None -> union
+    in helper xs ys
+  let intersect xs ys = 
+    let rec helper s1 s2 intersection : set = 
+      match D.choose s1 with 
+      |Some (k,v,s1') -> 
+        if D.member s2 k then 
+          let intersection' = D.insert intersection k v in 
+          helper s1' s2 intersection'
+        else
+          helper s1' s2 intersection
+      |None->intersection
+    in
+    helper xs ys D.empty
+  let remove x xs = D.empty
   let member xs x = false
   let choose xs = None
-  let fold f e = List.fold_left (fun a x -> f x a) e 
+  let fold f x xs = x
 
-  let string_of_elt x = D.string_of_key x
-  let string_of_set s = D.string_of_value s
+  let string_of_elt = D.string_of_key
+  let string_of_set s = D.string_of_dict s
   
+  let test_is_empty () = 
+    is_empty D.empty
+
+  let test_singleton () = 
+    singleton (C.gen())
+
   let run_tests () = ()
 
   end
