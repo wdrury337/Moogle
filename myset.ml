@@ -295,7 +295,10 @@ struct
   let test_singleton () = 
     singleton (C.gen())
 
-  let run_tests () = ()
+  let run_tests () = 
+    test_is_empty () ;
+    test_singleton () ;
+    ()
 
   end
 
