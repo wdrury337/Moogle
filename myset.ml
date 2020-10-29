@@ -260,8 +260,8 @@ struct
     | empty -> true
     | _ -> false 
   let singleton (x: elt) = D.insert empty x []
-  let insert x xs = D.insert xs x []
-  let union xs ys =
+  let insert x xs : set = D.insert xs x []
+  let union xs ys : set =
     let rec helper d union : set = 
       match D.choose d with
       | Some (k,v,d')-> 
@@ -269,7 +269,7 @@ struct
           helper d' union'
       | None -> union
     in helper xs ys
-  let intersect xs ys = 
+  let intersect xs ys : set = 
     let rec helper s1 s2 intersection : set = 
       match D.choose s1 with 
       |Some (k,v,s1') -> 
@@ -281,18 +281,20 @@ struct
       |None->intersection
     in
     helper xs ys D.empty
-  let remove x xs = D.remove xs x
-  let member xs x = D.member xs x 
-  let choose xs = 
+  let remove x xs : set = D.remove xs x
+  let member xs x : bool = D.member xs x 
+  let choose xs : (elt * set) option= 
     match D.choose xs with
     |None -> None
     |Some (k,v,d)->Some (k,d)
-  let fold f x = 
-    let rec helper f x xs = 
-      match D.choose xs with
-      |None -> x
-      |Some(k,v,d)->
-        helper f (f x k) d
+  let fold f x : set -> 'a = 
+    fun xs ->
+      let rec helper f x xs = 
+        match D.choose xs with
+        |None -> x
+        |Some(k,v,d)->
+          helper f (f k x) d
+      in helper f x xs
 
   let string_of_elt = D.string_of_key
   let string_of_set s = D.string_of_dict s
@@ -348,6 +350,6 @@ IntDictSet.run_tests();;
 module Make(C : COMPARABLE) : (SET with type elt = C.t) = 
   (* Change this line to use our dictionary implementation when your are 
    * finished. *)
-  ListSet (C)
+  DictSet (C)
   (* DictSet (C) *)
 
