@@ -274,7 +274,7 @@ end
 (* BTDict: a functor that implements our DICT signature           *)
 (* using a balanced tree (2-3 trees)                              *)
 (******************************************************************)
-(*
+
 module BTDict(D:DICT_ARG) : (DICT with type key = D.key
 with type value = D.value) =
 struct
@@ -433,7 +433,25 @@ struct
    *    _______________
    *)
   let rec balanced (d: dict) : bool =
-    raise TODO
+    match d with 
+    | Leaf->true
+    | Two (d1,_, d2)->
+      (match d1, d2 with
+      |Leaf, Leaf->true
+      |Leaf, _ ->false
+      |_, Leaf->false
+      |_,_->
+        if (balanced d1) && (balanced d2) then true
+        else false)
+    | Three (d1,_, d2,_, d3)->
+      (match d1, d2, d3 with
+      |Leaf, Leaf, Leaf ->true
+      |Leaf,_,_ ->false
+      |_,Leaf,_->false
+      |_,_,Leaf->false
+      |_,_,_->
+        if (balanced d1) && (balanced d2) && (balanced d3) then true
+        else false)
 
 
   (********************************************************************)
@@ -466,7 +484,6 @@ struct
     else 
       (D.gen_key_random(), D.gen_value()) :: (generate_random_list (size - 1))
 
-(*
   let test_balance () =
     let d1 = Leaf in
     assert(balanced d1) ;
@@ -506,7 +523,7 @@ struct
                    D.gen_pair(),Leaf,D.gen_pair(),Two(Leaf,D.gen_pair(),Leaf))
     in
     assert(not (balanced d7)) ;
-    () *)
+    () 
 
 (*
   let test_remove_nothing () =
@@ -573,7 +590,6 @@ struct
     ()
 
 end
-*)
 
 
 
@@ -591,10 +607,10 @@ IntStringListDict.run_tests();;
  * 
  * Uncomment out the lines below when you are ready to test your
  * 2-3 tree implementation. *)
-(*
+
 module IntStringBTDict = BTDict(IntStringDictArg) ;;
 IntStringBTDict.run_tests();;
-*)
+
 
 
 
