@@ -334,8 +334,8 @@ struct
    * crashing the program if run while not implemented even if they 
    * are not called (cf of_dict, which is already a function). When 
    * you implement them, you can remove the function wrappers *)
-  let string_of_key = (fun _ -> raise TODO)
-  let string_of_value = (fun _ -> raise TODO)
+  let string_of_key = D.string_of_key
+  let string_of_value = D.string_of_value
   let string_of_dict (d: dict) : string = raise TODO
       
   (* Debugging function. This will print out the tree in text format.
@@ -400,19 +400,41 @@ struct
    * in our dictionary and returns it as an option, or return None
    * if the key is not in our dictionary. *)
   let rec lookup (d: dict) (k: key) : value option =
-    raise TODO
+    match d with 
+    | Leaf->None
+    | Two (d1, p1, d2)->
+      let (k1,v) = p1 in 
+      (match D.compare k1 k with
+      |Less->lookup d1 k
+      |Eq->Some v
+      |Greater->lookup d2 k)
+    | Three (d1, p1, d2, p2, d3)->
+      let (k1, v1), (k2, v2) = p1, p2 in 
+      (match D.compare k1 k with 
+      |Less->lookup d1 k
+      |Eq->Some v1
+      |Greater->
+        (match D.compare k2 k with 
+        |Less->lookup d2 k
+        |Eq->Some v2
+        |Greater->lookup d3 k))
 
   (* TODO:
    * Write a height function that takes a dictonary as an argument and
    * returns the distance between the top of the tree and a leaf. A tree
    * consisting of just a leaf should have height 0.*)
   let rec height (d: dict) : int =
-    raise TODO
+    match d with 
+    | Leaf->0
+    | Two (d1,_,_)-> 1 + height d1
+    | Three (d1,_,_,_,_)-> 1 + height d1
 
   (* TODO:
    * Write a function to test whether a given key is in our dictionary *)
   let member (d: dict) (k: key) : bool =
-    raise TODO
+    match lookup d k with
+    | None->false
+    | Some _->true
 
   (* TODO:
    * Write a function that removes any (key,value) pair from our 
@@ -452,7 +474,6 @@ struct
       |_,_,_->
         if (balanced d1) && (balanced d2) && (balanced d3) then true
         else false)
-
 
   (********************************************************************)
   (*       TESTS                                                      *)
@@ -581,7 +602,7 @@ struct
     () *)
 
   let run_tests () = 
-(*    test_balance() ; *)
+    test_balance() ;
 (*    test_remove_nothing() ;
     test_remove_from_nothing() ;
     test_remove_in_order() ;

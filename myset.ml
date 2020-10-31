@@ -256,29 +256,27 @@ struct
 
   let empty = D.empty
   let is_empty (xs: set) = 
-    match xs with 
-    | empty -> true
-    | _ -> false 
-  let singleton (x: elt) = D.insert empty x []
+    if xs == D.empty then true else false
+  let singleton (x: elt) : set = D.insert empty x []
   let insert x xs : set = D.insert xs x []
   let union xs ys : set =
     let rec helper d union : set = 
-      match D.choose d with
+      (match D.choose d with
       | Some (k,v,d')-> 
         let union' = D.insert union k v in
           helper d' union'
-      | None -> union
+      | None -> union)
     in helper xs ys
   let intersect xs ys : set = 
     let rec helper s1 s2 intersection : set = 
-      match D.choose s1 with 
+      (match D.choose s1 with 
       |Some (k,v,s1') -> 
         if D.member s2 k then 
           let intersection' = D.insert intersection k v in 
           helper s1' s2 intersection'
         else
           helper s1' s2 intersection
-      |None->intersection
+      |None->intersection)
     in
     helper xs ys D.empty
   let remove x xs : set = D.remove xs x
@@ -290,10 +288,10 @@ struct
   let fold f x : set -> 'a = 
     fun xs ->
       let rec helper f x xs = 
-        match D.choose xs with
+        (match D.choose xs with
         |None -> x
         |Some(k,v,d)->
-          helper f (f k x) d
+          helper f (f k x) d)
       in helper f x xs
 
   let string_of_elt = D.string_of_key
@@ -303,11 +301,24 @@ struct
     assert(is_empty D.empty)
 
   let test_singleton () = 
-    singleton (C.gen())
+    let xs = singleton (C.gen ()) in
+    assert (not (is_empty xs))
+
+  let random_set = 
+    let xs = singleton (C.gen_random()) in 
+    let xs' = insert (C.gen_random()) xs in 
+    let xs'' = insert (C.gen_random()) xs' in
+    xs''
+
+  let test_fold () = 
+    let emp = empty in
+    let clone = fold (insert) emp in
+    assert ((clone random_set) == random_set)
 
   let run_tests () = 
     test_is_empty () ;
     test_singleton () ;
+    test_fold () ;
     ()
 
   end
