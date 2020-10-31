@@ -326,7 +326,27 @@ struct
   (* TODO:
    * Implement fold. Read the specification in the DICT signature above. *)
   let rec fold (f: key -> value -> 'a -> 'a) (u: 'a) (d: dict) : 'a =
-    raise TODO
+    match d with 
+    | Leaf->u
+    | Two (d1, p1, d2)->
+      let (k,v ) = p1 in
+      let u' = f k v u in
+      (* left *)
+      let u'' = fold f u' d1 in 
+      (* right *)
+      fold f u'' d2 
+    | Three (d1, p1, d2, p2, d3)->
+      let (k1, v1), (k2, v2) = p1, p2 in 
+      (* left *)
+      let ul = fold f u d1 in
+      (* center *)
+      let uc = fold f ul d2 in
+      (* right *)
+      let ur = fold f uc d3 in
+      let u' = f k1 v1 ur in
+      f k2 v2 u'
+
+
 
   (* TODO:
    * Implement these to-string functions
@@ -336,7 +356,17 @@ struct
    * you implement them, you can remove the function wrappers *)
   let string_of_key = D.string_of_key
   let string_of_value = D.string_of_value
-  let string_of_dict (d: dict) : string = raise TODO
+  let rec string_of_dict (d: dict) : string = 
+    match d with
+        | Leaf -> "Leaf"
+        | Two(left,(k,v),right) -> "Two(" ^ (string_of_dict left) 
+          ^ ",(" ^ (string_of_key k) ^ "," ^ (string_of_value v) ^ "),"
+          ^ (string_of_dict right) ^ ")"
+        | Three(left,(k1,v1),middle,(k2,v2),right) -> 
+          "Three(" ^ (string_of_dict left)
+          ^ ",(" ^ (string_of_key k1) ^ "," ^ (string_of_value v1) ^ "),"
+          ^ (string_of_dict middle) ^ ",(" ^ (string_of_key k2) ^ "," 
+          ^ (string_of_value v2) ^ ")," ^ (string_of_dict right) ^ ")"
       
   (* Debugging function. This will print out the tree in text format.
    * Use this function to see the actual structure of your 2-3 tree. *
@@ -371,7 +401,56 @@ struct
  * height(d') = height(d).
  *)
  let rec insert_to_tree (d: dict) (k: key) (v: value) : (bool * dict) =
-   raise TODO
+    match d with 
+    | Leaf->(true, Two(Leaf, (k,v), Leaf))
+    
+    | Two (d1, p1, d2)->
+      let (k1,v1) = p1 in 
+      (match D.compare k k1 with
+        |Less->
+          let (grew, d') = insert_to_tree d1 k v in
+          if grew then 
+            let Two (d1', p2, d2') = d' in
+            (false, Three (d1', p2, d2', p1, d2))
+          else 
+            (false, Two (d', p1, d2))
+        |Eq-> (false, (Two (d1, (k, v), d2)))
+        |Greater->
+          let (grew, d') = insert_to_tree d2 k v in
+          if grew then 
+            let Two (d1', p2, d2') = d' in
+            (false, Three (d1, p1, d1', p2, d2'))
+          else 
+            (false, Two (d1, p1, d')))
+    
+    | Three (d1, p1, d2, p2, d3)->
+      let (k1, v1), (k2, v2) = p1, p2 in
+      (match D.compare k k1 with
+      |Less->
+        let (grew, d') = insert_to_tree d1 k v in
+        if grew then 
+          (true, Two(d', p1, Two (d2, p2, d3)))
+        else
+          (false, Three(d', p1, d2, p2, d3))
+      |Eq->(false, (Three (d1, (k, v), d2, p2, d3)))
+      |Greater->
+        (match D.compare k k2 with
+        |Less->
+          let (grew, d') = insert_to_tree d2 k v in
+          if grew then 
+            let Two (d1', p', d2') = d' in 
+            (true, Two(Two(d1, p1, d1'), p', Two (d2', p2, d3)))
+          else
+            (false, Three(d', p1, d2, p2, d3))
+        |Eq->(false, (Three (d1, p1, d2, (k, v), d3)))
+        |Greater->
+          let (grew, d') = insert_to_tree d3 k v in
+          if grew then 
+            (true, Two(Two (d1, p1, d2), p2, d'))
+          else
+            (false, Three(d1, p1, d2, p2, d'))))
+
+
 
   (* Given a 2-3 tree d, return a new 2-3 tree which
  * additionally contains the pair (k,v)
