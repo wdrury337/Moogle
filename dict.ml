@@ -468,7 +468,7 @@ struct
     | Two(d', (k, v), _)-> smallest d' k v
     | Three(d',(k, v), _, _, _)-> smallest d' k v
 
-  (*When remove_from_tree d k v = (shrink, d'), that means:
+(* When remove_from_tree d k v = (shrink, d'), that means:
  * if shrink then height(d') = height(d)-1 else height(d') = height(d);
  * and d' is a balanced 2-3 tree containing every element of d except
  * the element (k,v).
@@ -481,7 +481,7 @@ struct
     (* Case where k is a two node *)
     | Two (d1, p, d2) ->                      
       let (pk, pv) = p in 
-      (match D.compare k pk with                               (* remove paren *)
+      (match D.compare k pk with
       (* Recurse down left subtree *)
       | Less-> 
         let (shrank, d1') = remove_from_tree d1 k in 
@@ -571,7 +571,7 @@ struct
       | Greater-> 
         (match D.compare k pk2 with
         | Less -> 
-          let (shrank, d2') = remove_from_tree d3 k in 
+          let (shrank, d2') = remove_from_tree d2 k in 
             if shrank then 
               (match d3 with 
               | Two(r_d1, r_p1, r_d2) -> 
@@ -587,7 +587,7 @@ struct
         (* Check if node is terminal or internal and remove *)
         | Eq-> 
           (match d2 with 
-          | Leaf-> (false, Two(d2, p2, d3))
+          | Leaf-> (false, Two(d1, p1, d2))
           | Two(m_d1, m_p1, m_d2)-> 
             let (pk, pv) = p2 in
             let (k', v') = smallest d3 pk pv in
@@ -635,17 +635,17 @@ struct
     | Leaf->None
     | Two (d1, p1, d2)->
       let (k1,v) = p1 in 
-      (match D.compare k1 k with
+      (match D.compare k k1 with
       |Less->lookup d1 k
       |Eq->Some v
       |Greater->lookup d2 k)
     | Three (d1, p1, d2, p2, d3)->
       let (k1, v1), (k2, v2) = p1, p2 in 
-      (match D.compare k1 k with 
+      (match D.compare k k1 with 
       |Less->lookup d1 k
       |Eq->Some v1
       |Greater->
-        (match D.compare k2 k with 
+        (match D.compare k k2 with 
         |Less->lookup d2 k
         |Eq->Some v2
         |Greater->lookup d3 k))
@@ -673,7 +673,10 @@ struct
    * as an option this (key,value) pair along with the new dictionary. 
    * If our dictionary is empty, this should return None. *)
   let choose (d: dict) : (key * value * dict) option =
-    raise TODO
+    match d with
+    | Leaf -> None
+    | Two(_,(k, v),_) -> Some (k, v, remove d k)
+    | Three(_,(k, v),_,_,_)-> Some (k, v, remove d k)
 
   (* TODO:
    * Write a function that when given a 2-3 tree (represented by our
@@ -777,7 +780,6 @@ struct
     assert(not (balanced d7)) ;
     () 
 
-(*
   let test_remove_nothing () =
     let pairs1 = generate_pair_list 26 in
     let d1 = insert_list empty pairs1 in
@@ -830,20 +832,18 @@ struct
     List.iter (fun (k,_) -> assert(not (member r5 k))) pairs5 ;
     assert(r5 = empty) ;
     assert(balanced r5) ;
-    () *)
+    ()
 
   let run_tests () = 
     test_balance() ;
-(*    test_remove_nothing() ;
+    test_remove_nothing() ;
     test_remove_from_nothing() ;
     test_remove_in_order() ;
     test_remove_reverse_order() ;
-    test_remove_random_order() ; *)
+    test_remove_random_order () ;
     ()
 
 end
-
-
 
 (******************************************************************)
 (* Run our tests.                                                 *)
@@ -863,7 +863,67 @@ IntStringListDict.run_tests();;
 module IntStringBTDict = BTDict(IntStringDictArg) ;;
 IntStringBTDict.run_tests();;
 
-
+let k1 = IntStringDictArg.gen_key_random()
+let k2 = IntStringDictArg.gen_key_random()
+let k3 = IntStringDictArg.gen_key_random()
+let k4 = IntStringDictArg.gen_key_random()
+let k5 = IntStringDictArg.gen_key_random()
+let k6 = IntStringDictArg.gen_key_random()
+let k7 = IntStringDictArg.gen_key_random()
+let k8 = IntStringDictArg.gen_key_random()
+let k9 = IntStringDictArg.gen_key_random()
+let k10 = IntStringDictArg.gen_key_random()
+let k11 = IntStringDictArg.gen_key_random()
+let k12 = IntStringDictArg.gen_key_random()
+let v1 = IntStringDictArg.gen_value()
+let v2 = IntStringDictArg.gen_value()
+let v3 = IntStringDictArg.gen_value()
+let v4 = IntStringDictArg.gen_value()
+let v5 = IntStringDictArg.gen_value()
+let v6 = IntStringDictArg.gen_value()
+let v7 = IntStringDictArg.gen_value()
+let v8 = IntStringDictArg.gen_value()
+let v9 = IntStringDictArg.gen_value()
+let v10 = IntStringDictArg.gen_value()
+let v11 = IntStringDictArg.gen_value()
+let v12 = IntStringDictArg.gen_value()
+let tree = IntStringBTDict.insert IntStringBTDict.empty k1 v1
+let tree = IntStringBTDict.insert tree k2 v2
+let tree = IntStringBTDict.insert tree k3 v3
+let tree = IntStringBTDict.insert tree k4 v4
+let tree = IntStringBTDict.insert tree k5 v5
+let tree = IntStringBTDict.insert tree k6 v6
+let tree = IntStringBTDict.insert tree k7 v7
+let tree = IntStringBTDict.insert tree k8 v8
+let tree = IntStringBTDict.insert tree k9 v9
+let tree = IntStringBTDict.insert tree k10 v10
+let tree = IntStringBTDict.insert tree k11 v11
+let tree = IntStringBTDict.insert tree k12 v12
+let sv1 = IntStringBTDict.string_of_value v1
+let sv2 = IntStringBTDict.string_of_value v2
+let sv3 = IntStringBTDict.string_of_value v3
+let sv4 = IntStringBTDict.string_of_value v4
+let sv5 = IntStringBTDict.string_of_value v5
+let sv6 = IntStringBTDict.string_of_value v6
+let sv7 = IntStringBTDict.string_of_value v7
+let sv8 = IntStringBTDict.string_of_value v8
+let sv9 = IntStringBTDict.string_of_value v9
+let sv10 = IntStringBTDict.string_of_value v10
+let sv11 = IntStringBTDict.string_of_value v11
+let sv12 = IntStringBTDict.string_of_value v12
+let s1 = IntStringBTDict.string_of_key k1
+let s2 = IntStringBTDict.string_of_key k2
+let s3 = IntStringBTDict.string_of_key k3
+let s4 = IntStringBTDict.string_of_key k4
+let s5 = IntStringBTDict.string_of_key k5
+let s6 = IntStringBTDict.string_of_key k6
+let s7 = IntStringBTDict.string_of_key k7
+let s8 = IntStringBTDict.string_of_key k8
+let s9 = IntStringBTDict.string_of_key k9
+let s10 = IntStringBTDict.string_of_key k10
+let s11 = IntStringBTDict.string_of_key k11
+let s12 = IntStringBTDict.string_of_key k12
+let stree = IntStringBTDict.string_of_dict tree
 
 
 (******************************************************************)
@@ -874,16 +934,5 @@ module Make (D:DICT_ARG) : (DICT with type key = D.key
   with type value = D.value) = 
   (* Change this line to the BTDict implementation when you are
    * done implementing your 2-3 trees. *)
-  AssocListDict(D)
+  BTDict(D)
   (* BTDict(D) *)
-
-
-let d = 
-  Two(Two(Three(Leaf,(168,bar),Leaf,(1038,bar),Leaf),(1552,bar),Three(Leaf,(2697,bar),Leaf,(3249,bar),Leaf)),
-  (3340,bar),
-  Three(Two(Leaf,(5042,bar),Leaf),(5951,bar),Two(Leaf,(6285,bar),Leaf),(7038,bar),Three(Leaf,(8269,bar),Leaf,(9007,bar),Leaf)))
-
-let a = 
-  Two(Two(Three(Leaf,(168,bar),Leaf,(1038,bar),Leaf),(1552,bar),Three(Leaf,(2697,bar),Leaf,(3249,bar),Leaf)),
-  (3340,bar),
-  Three(Two(Leaf,(5042,bar),Leaf),(8269,bar),Two(Leaf,(9007,bar),Leaf),(7038,bar),Three(Leaf,(8269,bar),Leaf,(9007,bar),Leaf)))
