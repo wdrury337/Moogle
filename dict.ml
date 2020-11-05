@@ -461,13 +461,137 @@ struct
   let insert (d: dict) (k: key) (v: value) : dict =
     snd (insert_to_tree d k v)
 
+
+  let rec smallest (d: dict) (prev_key: key) (prev_val: value) : (key * value) = 
+    match d with 
+    | Leaf-> (prev_key, prev_val)
+    | Two(d', (k, v), _)-> smallest d' k v
+    | Three(d',(k, v), _, _, _)-> smallest d' k v
+
   (*When remove_from_tree d k v = (shrink, d'), that means:
  * if shrink then height(d') = height(d)-1 else height(d') = height(d);
  * and d' is a balanced 2-3 tree containing every element of d except
  * the element (k,v).
  *)
   let rec remove_from_tree (d: dict) (k: key) : (bool * dict) =
-    raise TODO
+    match d with 
+    (* Case where k is not in tree *)
+    | Leaf->(false, d)
+
+    (* Case where k is a two node *)
+    | Two (d1, p, d2) ->                      
+      let (pk, pv) = p in 
+      (match D.compare k pk with)                               (* remove paren *)
+      (* Recurse down left subtree *)
+      | Less-> 
+        let (shrank, d1') = remove_from_tree d1 k in 
+        if shrank then 
+          (match d2 with
+          | Two (s_d1, s_p, s_d2)->
+            (true, Three(d1', p, s_d1, s_p, s_d2))
+          | Three (s_d1, s_p1, s_d2, s_p2, s_d3)->
+            let left = Two(d1', p, s_d1) in
+            let right = Two(s_d2, s_p2, s_d3) in
+            (false, Two(left, s_p1, right))
+          |_->(false, d))
+        else (false, Two(d1', p, d2))
+      (* Check if node is terminal or internal and remove *)
+      | Eq -> 
+        (match d1 with
+        |Leaf->(true, Leaf)
+        |Two(s_d1, s_p, s_d2)->
+          let (pk, pv) = p in
+          let (k', v') = smallest d2 pk pv in
+          let (shrank, new_d2) = remove_from_tree d2 k' in
+          if shrank then 
+            (true, Three(s_d1, s_p, s_d2, (k', v'), new_d2))
+          else (false, Two(d1, (k', v'), new_d2))
+        | Three (s_d1, s_p1, s_d2, s_p2, s_d3)->
+          let (pk, pv) = p in
+          let (k', v') = smallest d2 pk pv in
+          let (shrank, new_d2) = remove_from_tree d2 k' in
+          if shrank then 
+            let left = Two(s_d1, s_p1, s_d2) in
+            let right = Two(s_d3, (k', v'), new_d2) in 
+            (false, Two(left, s_p2, right))
+          else (false, Two(d1, (k', v'), new_d2))
+      (* Recurse down right subtree *)
+      | Greater-> 
+        let (shrank, d2') = remove_from_tree d2 k in 
+        if shrank then 
+          (match d1 with
+          | Two (s_d1, s_p, s_d2)->
+            (true, Three(s_d1, s_p, s_d2, p, d2'))
+          | Three (s_d1, s_p1, s_d2, s_p2, s_d3)->
+            let left = Two(s_d1, s_p1, s_d2) in
+            let right = Two(s_d3, p, d2') in
+            (false, Two(left, s_p2, right))
+          |_->(false, d))
+        else (false, Two(d1, p, d2')))
+
+    (* Case where k is in a three node *)
+    | Three (d1, p1, d2, p2, d3)->
+      let (pk1, pv1), (pk2, pv2) = p1, p2 in 
+      (match D.compare k pk1 with
+      | Less->
+        let (shrank, d1') = remove_from_tree d1 k in 
+        if shrank then 
+          (match d2 with 
+          | Two(m_d1, m_p2, m_d2) -> 
+            let three = Three(d1', p1, m_d1, m_p2, m_d2) in 
+            (false, Two(three, p2, d3))
+          | Three(m_d1, m_p1, m_d2, m_p2, m_d3) -> 
+            let left = Two(d1', p1, m_d1) in 
+            let middle = Two(m_d2, m_p2, m_d3) in 
+            (false, Three(left, m_p1, middle, p2, d3))
+          |_->(false, d))
+        else (false, Three (d1', p1, d2, p2, d3))
+      (* Check if node is terminal or internal and remove *)
+      | Eq-> 
+        match d1 with 
+        | Leaf-> (false, Two(d2, p2, d3))
+        | Two(s_d1, s_p, s_d2)-> 
+          let (pk, pv) = p1 in
+          let (k', v') = smallest d2 pk pv in
+          let (shrank, new_d2) = remove_from_tree d2 k' in
+          if shrank then 
+            (true, Three(s_d1, s_p, s_d2, (k', v'), new_d2))
+          else (false, Two(d1, (k', v'), new_d2))
+        | Three(s_d1, s_p1, s_d2, s_p2, s_d3)-> 
+      (* Recurse down center subtree *)
+      | Greater-> 
+        (match D.compare k pk2 with
+        | Less -> 
+          let (shrank, d2') = remove_from_tree d3 k in 
+            if shrank then 
+              (match d3 with 
+              | Two(r_d1, r_p1, r_d2) -> 
+                let three = Three(d2', p2, r_d1, r_p1, r_d2) in 
+                (false, Two(d1, p1, three))
+              | Three(r_d1, r_p1, r_d2, r_p2, r_d3) -> 
+                let middle = Two(d2', p2, r_d1) in 
+                let right = Two(r_d2, r_p2, r_d3) in 
+                (false, Three(d1, p1, middle, r_p1, right))
+               |_->(false, d))
+            else
+              (false, Three (d1, p1, d2', p2, d3))
+        (* Check if node is terminal or internal and remove *)
+        | Eq-> (false, Two(d1, p1, d2))  
+         (* Recurse down right subtree *)
+        | Greater -> 
+          let (shrank, d3') = remove_from_tree d3 k in 
+          if shrank then 
+            (match d2 with 
+            | Two(m_d1, m_p2, m_d2) -> 
+              let three = Three(m_d1, m_p2, m_d2, p2, d3') in 
+              (false, Two(d1, p1, three))
+            | Three(m_d1, m_p1, m_d2, m_p2, m_d3) -> 
+              let right = Two(m_d3, p2, d3') in 
+              let middle = Two(m_d1, m_p1, m_d2) in 
+              (false, Three(d1, p1, middle, m_p2, right))
+            | _->(false, d))
+          else
+            (false, Three (d1, p1, d2, p2, d3'))))
 
 (* given a 2-3 tree d, return a 2-3 without element k *)
   let remove (d: dict) (k: key) : dict =
