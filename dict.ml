@@ -441,7 +441,7 @@ struct
             let Two (d1', p', d2') = d' in 
             (true, Two(Two(d1, p1, d1'), p', Two (d2', p2, d3)))
           else
-            (false, Three(d', p1, d2, p2, d3))
+            (false, Three(d1, p1, d', p2, d3))
         |Eq->(false, (Three (d1, p1, d2, (k, v), d3)))
         |Greater->
           let (grew, d') = insert_to_tree d3 k v in
@@ -481,7 +481,7 @@ struct
     (* Case where k is a two node *)
     | Two (d1, p, d2) ->                      
       let (pk, pv) = p in 
-      (match D.compare k pk with)                               (* remove paren *)
+      (match D.compare k pk with                               (* remove paren *)
       (* Recurse down left subtree *)
       | Less-> 
         let (shrank, d1') = remove_from_tree d1 k in 
@@ -514,7 +514,7 @@ struct
             let left = Two(s_d1, s_p1, s_d2) in
             let right = Two(s_d3, (k', v'), new_d2) in 
             (false, Two(left, s_p2, right))
-          else (false, Two(d1, (k', v'), new_d2))
+          else (false, Two(d1, (k', v'), new_d2)))
       (* Recurse down right subtree *)
       | Greater-> 
         let (shrank, d2') = remove_from_tree d2 k in 
@@ -547,8 +547,8 @@ struct
           |_->(false, d))
         else (false, Three (d1', p1, d2, p2, d3))
       (* Check if node is terminal or internal and remove *)
-      | Eq-> 
-        match d3 with 
+      | Eq -> 
+        (match d3 with 
         | Leaf-> (false, Two(d2, p2, d3))
         | Two(r_d1, r_p1, r_d2)-> 
           let (pk, pv) = p1 in
@@ -563,10 +563,10 @@ struct
           let (k', v') = smallest d2 pk pv in
           let (shrank, new_d2) = remove_from_tree d2 k' in
           if shrank then 
-            let middle = Two(new_d2, p2, r_d1) in 
-            let right = Two(r_d2, r_p2, r_d3) in 
-            (false, Three(d1, (k', v'), middle, r_p1, right))
-          else (false, Three(d1, (k', v'), new_d2, p2, d3))
+            let middle = Two(new_d2, p2, s_d1) in 
+            let right = Two(s_d2, s_p2, s_d3) in 
+            (false, Three(d1, (k', v'), middle, s_p1, right))
+          else (false, Three(d1, (k', v'), new_d2, p2, d3)))
       (* Recurse down center subtree *)
       | Greater-> 
         (match D.compare k pk2 with
@@ -586,16 +586,16 @@ struct
               (false, Three (d1, p1, d2', p2, d3))
         (* Check if node is terminal or internal and remove *)
         | Eq-> 
-          match d2 with 
+          (match d2 with 
           | Leaf-> (false, Two(d2, p2, d3))
           | Two(m_d1, m_p1, m_d2)-> 
             let (pk, pv) = p2 in
             let (k', v') = smallest d3 pk pv in
             let (shrank, new_d3) = remove_from_tree d3 k' in
             if shrank then 
-              let three = Three(m_d1, m_p1, m_d2, (k', v'), d3') in 
+              let three = Three(m_d1, m_p1, m_d2, (k', v'), new_d3) in 
               (false, Two(d1, p1, three))
-            else (false, Three(d1, (k', v'), new_d3, p2, d3))
+            else (false, Three(d1, p1, d2, (k', v'), new_d3))
           | Three(m_d1, m_p1, m_d2, m_p2, m_d3)-> 
             let (pk, pv) = p2 in
             let (k', v') = smallest d3 pk pv in
@@ -604,7 +604,7 @@ struct
               let right = Two(m_d3, (k', v'), new_d3) in 
               let middle = Two(m_d1, m_p1, m_d2) in 
               (false, Three(d1, p1, middle, m_p2, right))
-            else (false, Three(d1, (k', v'), d2, p2, new_d3))
+            else (false, Three(d1, p1, d2, (k', v'), new_d3)))
          (* Recurse down right subtree *)
         | Greater -> 
           let (shrank, d3') = remove_from_tree d3 k in 
@@ -877,3 +877,13 @@ module Make (D:DICT_ARG) : (DICT with type key = D.key
   AssocListDict(D)
   (* BTDict(D) *)
 
+
+let d = 
+  Two(Two(Three(Leaf,(168,bar),Leaf,(1038,bar),Leaf),(1552,bar),Three(Leaf,(2697,bar),Leaf,(3249,bar),Leaf)),
+  (3340,bar),
+  Three(Two(Leaf,(5042,bar),Leaf),(5951,bar),Two(Leaf,(6285,bar),Leaf),(7038,bar),Three(Leaf,(8269,bar),Leaf,(9007,bar),Leaf)))
+
+let a = 
+  Two(Two(Three(Leaf,(168,bar),Leaf,(1038,bar),Leaf),(1552,bar),Three(Leaf,(2697,bar),Leaf,(3249,bar),Leaf)),
+  (3340,bar),
+  Three(Two(Leaf,(5042,bar),Leaf),(8269,bar),Two(Leaf,(9007,bar),Leaf),(7038,bar),Three(Leaf,(8269,bar),Leaf,(9007,bar),Leaf)))
