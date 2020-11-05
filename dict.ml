@@ -548,16 +548,25 @@ struct
         else (false, Three (d1', p1, d2, p2, d3))
       (* Check if node is terminal or internal and remove *)
       | Eq-> 
-        match d1 with 
+        match d3 with 
         | Leaf-> (false, Two(d2, p2, d3))
-        | Two(s_d1, s_p, s_d2)-> 
+        | Two(r_d1, r_p1, r_d2)-> 
           let (pk, pv) = p1 in
           let (k', v') = smallest d2 pk pv in
           let (shrank, new_d2) = remove_from_tree d2 k' in
           if shrank then 
-            (true, Three(s_d1, s_p, s_d2, (k', v'), new_d2))
-          else (false, Two(d1, (k', v'), new_d2))
+            let three = Three(new_d2, p2, r_d1, r_p1, r_d2) in 
+            (false, Two(d1, (k', v'), three))
+          else (false, Three(d1, (k', v'), new_d2, p2, d3))
         | Three(s_d1, s_p1, s_d2, s_p2, s_d3)-> 
+          let (pk, pv) = p1 in
+          let (k', v') = smallest d2 pk pv in
+          let (shrank, new_d2) = remove_from_tree d2 k' in
+          if shrank then 
+            let middle = Two(new_d2, p2, r_d1) in 
+            let right = Two(r_d2, r_p2, r_d3) in 
+            (false, Three(d1, (k', v'), middle, r_p1, right))
+          else (false, Three(d1, (k', v'), new_d2, p2, d3))
       (* Recurse down center subtree *)
       | Greater-> 
         (match D.compare k pk2 with
@@ -576,14 +585,33 @@ struct
             else
               (false, Three (d1, p1, d2', p2, d3))
         (* Check if node is terminal or internal and remove *)
-        | Eq-> (false, Two(d1, p1, d2))  
+        | Eq-> 
+          match d2 with 
+          | Leaf-> (false, Two(d2, p2, d3))
+          | Two(m_d1, m_p1, m_d2)-> 
+            let (pk, pv) = p2 in
+            let (k', v') = smallest d3 pk pv in
+            let (shrank, new_d3) = remove_from_tree d3 k' in
+            if shrank then 
+              let three = Three(m_d1, m_p1, m_d2, (k', v'), d3') in 
+              (false, Two(d1, p1, three))
+            else (false, Three(d1, (k', v'), new_d3, p2, d3))
+          | Three(m_d1, m_p1, m_d2, m_p2, m_d3)-> 
+            let (pk, pv) = p2 in
+            let (k', v') = smallest d3 pk pv in
+            let (shrank, new_d3) = remove_from_tree d3 k' in
+            if shrank then 
+              let right = Two(m_d3, (k', v'), new_d3) in 
+              let middle = Two(m_d1, m_p1, m_d2) in 
+              (false, Three(d1, p1, middle, m_p2, right))
+            else (false, Three(d1, (k', v'), d2, p2, new_d3))
          (* Recurse down right subtree *)
         | Greater -> 
           let (shrank, d3') = remove_from_tree d3 k in 
           if shrank then 
             (match d2 with 
-            | Two(m_d1, m_p2, m_d2) -> 
-              let three = Three(m_d1, m_p2, m_d2, p2, d3') in 
+            | Two(m_d1, m_p1, m_d2) -> 
+              let three = Three(m_d1, m_p1, m_d2, p2, d3') in 
               (false, Two(d1, p1, three))
             | Three(m_d1, m_p1, m_d2, m_p2, m_d3) -> 
               let right = Two(m_d3, p2, d3') in 
