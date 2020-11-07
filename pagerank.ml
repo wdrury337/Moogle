@@ -96,7 +96,7 @@ end
 
 (* Each node's rank is equal to the number of pages that link to it. *)
 module InDegreeRanker  (GA: GRAPH) (NSA: NODE_SCORE with module N = GA.N) : 
-  (RANKER with module G = GA with module NS = NSA) =
+  ((RANKER with module G = GA) with module NS = NSA) =
 struct
   module G = GA
   module NS = NSA
@@ -118,9 +118,9 @@ end
 (*****************************************************************)
 (* Eigenvalue Ranker                                            *)
 (*****************************************************************)
-(*
 
-module type WALK_PARAMS =
+
+module type WALK_PARAMS = 
 sig
   (* Should we randomly jump somewhere else occasionally? 
     if no, this should be None.  Else it should be the probability of 
@@ -130,18 +130,63 @@ end
 
 module EigenvalueRanker (GA: GRAPH) (NSA: NODE_SCORE with module N = GA.N) 
   (P : WALK_PARAMS) : 
-  (RANKER with module G = GA with module NS = NSA) =
+  ((RANKER with module G = GA) with module NS = NSA) =
 struct
+
   module G = GA
   module NS = NSA
 
+  let dot_product (x:float list) (y:float list) : float = 
+    List.fold_left2 (fun a b c -> a +. (b *. c)) 0.0 x y
+
+  let multiply (matrix:float list list) (vector:float list) : float list = 
+    List.map (fun v -> dot_product v vector) matrix 
+
+  let get_neighbors (g:G.graph) (node:G.node): float list = 
+    let pages = List.rev (G.nodes g) in
+    let (link_vector:float list) = [] in
+    match G.neighbors g node with 
+    | Some neighbors -> 
+      let n = 1. /. float_of_int (List.length neighbors) in
+      List.fold_left (fun vector page -> 
+        if List.mem page neighbors then n::vector
+        else 0.0::vector)
+        link_vector pages
+    | None ->
+      let n =  1. /. float_of_int (List.length pages) in
+      List.fold_left (fun vector _ -> n::vector) link_vector pages
+
+  let converges (r: float list) (r': float list): bool = 
+    let mag = dot_product r r in 
+    let distance = List.fold_left2 (fun a b c -> a +. ((b-.c)*.(b-.c))) 0.0 r r' in 
+    distance < (mag/.1000.)
+
   let rank (g : G.graph) =
-  (* TODO - fill this in*)
+    let pages = G.nodes g in
+    let n = float_of_int (List.length pages) in
+    let link_matrix : float list list = 
+      List.map (fun page -> get_neighbors g page) pages in 
+    let u = List.fold_left (fun vector _ -> (1.0)::vector) [] pages in 
+    let d = match P.do_random_jumps with 
+      | None -> 0.0
+      | Some (d:float) -> d
+    in
+    let rec get_rank (r:float list) : float list = 
+      let u' = (List.map (fun x -> (d/.n) *. x) u) in
+      let l' = multiply link_matrix r in
+      let r' = List.map2 (+.) u' (List.map (fun x -> (1.-.d) *. x) l') in
+      if converges r r' then r' 
+      else get_rank r'
+    in
+    let ranks = get_rank (List.fold_left (fun vector _ -> (1.0/.n)::vector) [] pages) in 
+    let zeroMap = NS.zero_node_score_map pages in 
+    List.fold_left2 (fun map page rank -> NS.set_score map page rank) zeroMap pages ranks
 end
-*)
 
 
-(*******************  TESTS BELOW  *******************)
+
+(*******************  
+TESTS BELOW  *******************)
 
 module TestInDegreeRanker =
 struct 
@@ -172,7 +217,6 @@ struct
 
 end
 
-(*
 module TestEigenvalueRanker =
 struct 
   module G = NamedGraph
@@ -193,14 +237,12 @@ struct
 
   module Ranker = EigenvalueRanker (G) (NS) 
     (struct
-       let do_random_jumps = 0.01
+       let do_random_jumps = Some 0.01
      end)
 
-  let ns = Ranker.rank g
-  (*let _ = Printf.printf "Testing EigenvalueRanker:\n NS: %s\n" 
+    let ns = Ranker.rank g
+    let _ = Printf.printf "Testing EigenvalueRanker:\n NS: %s\n" 
     (NS.string_of_node_score_map ns) 
-  *)
 end
-*)
 
 
