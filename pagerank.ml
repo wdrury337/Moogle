@@ -159,7 +159,7 @@ struct
   let converges (r: float list) (r': float list): bool = 
     let mag = dot_product r r in 
     let distance = List.fold_left2 (fun a b c -> a +. ((b-.c)*.(b-.c))) 0.0 r r' in 
-    distance < (mag/.1000.)
+    sqrt(distance) < (mag/.1000.)
 
   let rank (g : G.graph) =
     let pages = G.nodes g in
@@ -179,6 +179,7 @@ struct
       else get_rank r'
     in
     let ranks = get_rank (List.fold_left (fun vector _ -> (1.0/.n)::vector) [] pages) in 
+    let () = List.iter (Printf.printf "%f ") ranks in
     let zeroMap = NS.zero_node_score_map pages in 
     List.fold_left2 (fun map page rank -> NS.set_score map page rank) zeroMap pages ranks
 end

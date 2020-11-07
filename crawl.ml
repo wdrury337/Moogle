@@ -5,13 +5,11 @@ open Pagerank ;;
 
 
 module MoogleRanker
-  = InDegreeRanker (PageGraph) (PageScore)
-  (*
-     = RandomWalkRanker (PageGraph) (PageScore) (struct 
+  (* = InDegreeRanker (PageGraph) (PageScore) *)
+     = EigenvalueRanker (PageGraph) (PageScore) (struct 
        let do_random_jumps = Some 0.20
        let num_steps = 1000
      end)
-  *)
 
 (* Dictionaries mapping words (strings) to sets of crawler links *)
 module WordDict = Dict.Make(
@@ -66,7 +64,7 @@ let rec crawl (n:int) (frontier: LinkSet.set)
     if LinkSet.member visited elt then crawl n set visited d else
     let visited' = LinkSet.insert elt visited in
     (match get_page elt with
-    |None->crawl (n-1) set visited' d
+    |None->crawl n set visited' d
     |Some page->
       let words = page.words in
       let d' = List.fold_left (fun xs x -> 

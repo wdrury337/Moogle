@@ -14,7 +14,7 @@ open Pagerank ;;
 open Crawl ;;
 
 (* Set to true to enable various debugging printouts *)
-let debug = true
+let debug = false
 
 let std_response_header s = 
   "HTTP/1.1 200 OK\r\n" ^
