@@ -159,7 +159,7 @@ struct
   let converges (r: float list) (r': float list): bool = 
     let mag = dot_product r r in 
     let distance = List.fold_left2 (fun a b c -> a +. ((b-.c)*.(b-.c))) 0.0 r r' in 
-    sqrt(distance) < (mag/.1000.)
+    (distance*.distance) < ((mag*.mag)/.1000000.)
 
   let rank (g : G.graph) =
     let pages = G.nodes g in
@@ -179,9 +179,9 @@ struct
       else get_rank r'
     in
     let ranks = get_rank (List.fold_left (fun vector _ -> (1.0/.n)::vector) [] pages) in 
-    let () = List.iter (Printf.printf "%f ") ranks in
     let zeroMap = NS.zero_node_score_map pages in 
-    List.fold_left2 (fun map page rank -> NS.set_score map page rank) zeroMap pages ranks
+    let score = List.fold_left2 (fun map page rank -> NS.set_score map page rank) zeroMap pages ranks in
+    NS.normalize score
 end
 
 
@@ -224,10 +224,10 @@ struct
   let g = G.from_edges [("a","b") ; 
                         ("b","c") ;
                         ("c","d") ;
-                        ("d","e") ;
+                        ("d","a") ;
                         ("e","f") ;
-                        ("a","g") ;
-                        ("g","a")]
+                        ("f","g") ;
+                        ("g","h")]
   
   module NS = NodeScore (struct
                            type node = string 
@@ -238,12 +238,12 @@ struct
 
   module Ranker = EigenvalueRanker (G) (NS) 
     (struct
-       let do_random_jumps = Some 0.01
+       let do_random_jumps = None
      end)
 
     let ns = Ranker.rank g
     let _ = Printf.printf "Testing EigenvalueRanker:\n NS: %s\n" 
-    (NS.string_of_node_score_map ns) 
+    (NS.string_of_node_score_map ns)
 end
 
 
